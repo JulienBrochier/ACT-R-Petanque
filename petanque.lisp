@@ -14,6 +14,7 @@
   (setf *boules_bleus* nil)  
   
   (setf *window* (open-exp-window "Boulodrome"))
+  (install-device *window*)
     
 ;;    (add-text-to-exp-window *window* "O" :x 170 :y 150 :color "blue")
      (add-text-to-exp-window *window* "O" :x 170 :y 150 :color "red")
@@ -40,7 +41,6 @@
 
 (defun creation-terrain ()
   (clear-exp-window)
-  (install-device *window*)
    (dolist (l *cochonnet*)
 	(add-text-to-exp-window *window* "O" :x (car l) :y (car (cdr l)) :color "black")
    )
@@ -50,6 +50,7 @@
    (dolist (l *boules_bleus*)
 	(add-text-to-exp-window *window* "O" :x (car l) :y (car (cdr l)) :color "blue")
    )
+  ;;(proc-display nil)
 )
 
 (defun ajoute-boule (x y color)
