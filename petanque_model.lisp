@@ -8,7 +8,7 @@
 (chunk-type partie xn yn db1 db2 db3 dr1 dr2 dr3 dpp)
 (chunk-type tirer force inclinaison direction)
 (chunk-type terrain type)
-(chunk-type goal state typeTerrain ouvreur nbB nbR xn yn dist dpp couleur bqp)
+(chunk-type goal state typeTerrain ouvreur nbB nbR xn yn dist db1 db2 db3 dr1 dr2 dr3 dpp xpp ypp couleur bqp waiting)
 
 ;dpp : distance plus proche
 ;bqp : boule qui prend (couleur)
@@ -16,7 +16,8 @@
 (add-dm
  (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk)
  (trouverBoule isa chunk) (encodeBoule isa chunk) (saveBoule isa chunk)
- (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk)
+ (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)
+ (go isa chunk)
  (first-goal isa goal state start typeTerrain 1 ouvreur blue) (plot isa chunk))
 
 (P debuterManche
@@ -24,8 +25,6 @@
       ISA         goal
       state       start
 ;;      typeTerrain =type
-   ?imaginal>
-	state free
  ==>
    !output! ("START")
    =goal>
@@ -55,18 +54,10 @@
    =visual-location>
      screen-x     =coordX
      screen-y  	  =coordY
-   ?imaginal>
-      state       free
  ==>
    !output! ("Encode le cochonnet")
    =goal>
       state       trouverBoule
-	xn =coordX
-	yn =coordY
-   !output! (=coordX)
-   !output! (=coordY)
-   +imaginal>
-	isa partie   
 	xn =coordX
 	yn =coordY
 	dpp 5000
@@ -76,6 +67,8 @@
 	dr1 0
 	dr2 0
 	dr3 0
+   !output! (=coordX)
+   !output! (=coordY)
 )
 
 (P findBoule
@@ -83,9 +76,9 @@
       ISA         goal
       state       trouverBoule
  ==>
-   !output! ("find Boule")
    +visual-location>
-      :attended    new
+      :attended    nil
+    - color black
    =goal>    
       state       encodeBoule
 )
@@ -94,13 +87,12 @@
    =goal>
       ISA         goal
       state       encodeBoule
+	xn =xn
+	yn =yn
    =visual-location>
      screen-x     =coordX
      screen-y  	  =coordY
      color        =couleur
-  =imaginal>
-	xn =xn
-	yn =yn
  ==>
    !output! ("Encode boule")
    !bind! =dist (sqrt (+ (* (- =coordX =xn) (- =coordX =xn)) (* (- =coordY =yn) (- =coordY =yn))) )
@@ -108,7 +100,7 @@
       state   saveBoule
 	dist  =dist
 	couleur =couleur
-   =imaginal>
+	waiting go
   !output! (=dist)
   !output! (=couleur)
 )
@@ -119,13 +111,9 @@
 	couleur blue
 	nbB 0
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	db1 =dist
     =goal>
+	db1 =dist
 	nbB 1
 	state detBPP
 )
@@ -136,14 +124,10 @@
 	couleur blue
 	nbB 1
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	db2 =dist
     =goal>
-	nbB 1
+	db2 =dist
+	nbB 2
 	state detBPP
 )
 
@@ -151,16 +135,12 @@
    =goal>
 	state saveBoule
 	couleur blue
-	nbB 1
+	nbB 2
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	db3 =dist
     =goal>
-	nbB 1
+	db3 =dist
+	nbB 3
 	state detBPP
 )
 
@@ -170,13 +150,9 @@
 	couleur red
 	nbR 0
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	dr1 =dist
     =goal>
+	dr1 =dist
 	nbR 1
 	state detBPP
 )
@@ -187,14 +163,10 @@
 	couleur red
 	nbR 1
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	dr2 =dist
     =goal>
-	nbR 1
+	dr2 =dist
+	nbR 2
 	state detBPP
 )
 
@@ -202,24 +174,20 @@
    =goal>
 	state saveBoule
 	couleur red
-	nbR 1
+	nbR 2
         dist =dist
-   ?imaginal>
-        state       free
-   =imaginal>
  ==>
-    =imaginal>
-	dr3 =dist
     =goal>
-	nbR 1
+	dr3 =dist
+	nbR 3
 	state detBPP
 )
 
-(P determinerBoulePlusProche
+(P determinerBoulePlusProcheVrai
     =goal>
 	state detBPP
 	dist =dist
-	dpp  =dpp
+	dpp =dpp
       < dist =dpp
 	couleur =couleur
  ==>
@@ -229,31 +197,79 @@
 	bqp =couleur
 )
 
-(P determineBleuProche
+(P determinerBoulePlusProcheFaux
+    =goal>
+	state detBPP
+	dist =dist
+	dpp =dpp
+     > dist =dpp
+	couleur =couleur
+ ==>
+   =goal>
+	state trouverBoule
+)
+
+(P determineBleuJoue1
    =goal>
 	state encodeBoule
 	bqp red
-      < nbB 4
-   ?visual-location>
-       buffer  failure	
+      < nbB 3
+	waiting go
+;;   ?visual-location>
+;;       buffer  empty
  ==>
    =goal>
 	state remember
 )
 
-(P determineRougeProche
+(P determineBleuJoue2
    =goal>
 	state encodeBoule
 	bqp blue
-      < nbR 4
+      < nbB 3
+        nbR 3
+	waiting go
+;;   ?visual-location>
+;;       buffer  empty
+ ==>
+   =goal>
+	state remember
+)
+
+(P determineRougeJoue1
+   =goal>
+	state encodeBoule
+	bqp blue
+      < nbR 3
 	xn =xn
 	yn =yn
-   ?visual-location>
-       buffer  failure	
+	waiting go
+;;   ?visual-location>
+;;       buffer  empty
  ==>
    !eval! (tir-hasard =xn =yn "red")
    =goal>
 	state trouverBoule
+	waiting wait
+)
+
+(P determineRougeJoue2
+   =goal>
+	state encodeBoule
+	bqp red
+      < nbR 3
+	nbB 3
+	xn =xn
+	yn =yn
+	waiting go
+;;   ?visual-location>
+;;       buffer  empty
+ ==>
+   !output! (Rouge tir)
+   !eval! (tir-hasard =xn =yn "red")
+   =goal>
+	state trouverBoule
+	waiting wait
 )
 
 ;;
@@ -274,7 +290,6 @@
 	xn =xn
 	yn =yn
 	dpp =dpp
-   -retrieval>
 ;; Il faudra définir une similitude pour avoir une chance que ça match
 )
 
@@ -284,11 +299,26 @@
 	xn =xn
 	yn =yn
      ?retrieval>
-       buffer  empty
+       buffer  failure
  ==>
     !output! (Tir au hasard)
     !eval!   (tir-hasard =xn =yn "blue")
-     -goal>
+;;    !eval! (tirer)
+   =goal>
+	waiting wait   
+	state trouverBoule
+)
+
+(P wait
+   =goal>
+        waiting wait
+	state encodeBoule
+   ?visual-location>
+       buffer  failure	
+ ==>
+   !output! (WaiT)
+   =goal>
+	state trouverBoule
 )
 
 (P canRemember
@@ -302,7 +332,13 @@
  ==>
    -goal>
    !output! (Remember)
+;;executer le tir prévu
+;;   =goal>
+;;	waiting wait   
+;;	state trouverBoule
 )
+
+
 
 (goal-focus first-goal)
 )
