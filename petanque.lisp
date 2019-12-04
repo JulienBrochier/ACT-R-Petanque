@@ -5,6 +5,7 @@
 (defvar *boules_rouges* nil)
 (defvar *cochonnet* nil)
 (defvar *boules_bleus* nil)
+(defvar *texte* "O")
 
 (defun petanque-experiment ()
   
@@ -15,10 +16,8 @@
   
   (setf *window* (open-exp-window "Boulodrome"))
     
-;;    (add-text-to-exp-window *window* "O" :x 170 :y 150 :color "blue")
-     (add-text-to-exp-window *window* "O" :x 170 :y 150 :color "red")
-     (ajoute-boule 125 150 "black")
-     (ajoute-boule 125 100 "red")
+;;     (ajoute-boule 125 150 "black")
+;;     (ajoute-boule 125 100 "red")
      (creation-terrain) 
     
     (add-act-r-command "grouped-response" 'record-response "Response from model")
@@ -27,6 +26,7 @@
 
     (setf *response* nil) 
 
+    (init-partie)
     (run 20)
     
     (remove-act-r-command "grouped-response")
@@ -70,4 +70,15 @@
 (defun tirer ()
   ;;(remove-items-from-exp-window *last_red_shoot*)
   (add-text-to-exp-window *window* "O" :x 100 :y 100 :color "blue")
+)
+
+(defun init-partie ()
+(let ((joueur (random 2)) (xn (+(random 150) 50)) (yn (+(random 150) 50)))
+(add-text-to-exp-window *window* *texte* :x xn :y yn :color "black")
+(ajoute-boule 125 100 "black")
+(if (= joueur 1)
+(mod-chunk-fct 'first-goal (list 'state 'start 'ouvreur 'red))
+(mod-chunk-fct 'first-goal (list 'state 'start 'ouvreur 'blue))
+) 
+)
 )

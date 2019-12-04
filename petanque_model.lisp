@@ -2,7 +2,7 @@
 
 (define-model petanque
 (sgp :seed (123456 0))
-(sgp :v t :esc t :lf 0.4 :bll 0.5 :ans 0.5 :rt 0 :ncnar nil :trace-detail high)
+(sgp :v t :esc t :lf 0.4 :bll 0.5 :ans 0.5 :rt 0 :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 8)
 
 (sgp :show-focus t)
 (chunk-type partie xn yn db1 db2 db3 dr1 dr2 dr3 dpp)
@@ -15,21 +15,27 @@
 
 (add-dm
  (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk)
- (trouverBoule isa chunk) (encodeBoule isa chunk) (saveBoule isa chunk)
+ (trouverBoule isa chunk) (attendBoule isa chunk)(encodeBoule isa chunk) (saveBoule isa chunk)
  (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)
- (go isa chunk)
- (first-goal isa goal state start typeTerrain 1 ouvreur blue) (plot isa chunk))
+ (go isa chunk)(plot isa chunk))
+
+(define-chunks
+(first-goal isa goal)
+)
+
 
 (P debuterManche
    =goal>
       ISA         goal
       state       start
+      ouvreur =ouvreur
 ;;      typeTerrain =type
  ==>
    !output! ("START")
    =goal>
       ISA         goal
       state   trouverCochonnet
+       bqp =ouvreur
 )
 
 (P findCochonnet
@@ -80,7 +86,23 @@
       :attended    nil
     - color black
    =goal>    
+      state       attendBoule
+      waiting go
+)
+
+(P attend-boule
+   =goal>
+      state       attendBoule
+   =visual-location>
+   ?visual>
+      state       free
+==>
+   +visual>
+      cmd         move-attention
+      screen-pos  =visual-location
+   =goal>
       state       encodeBoule
+   =visual-location>
 )
 
 (P encodeBoule
@@ -100,7 +122,6 @@
       state   saveBoule
 	dist  =dist
 	couleur =couleur
-	waiting go
   !output! (=dist)
   !output! (=couleur)
 )
@@ -211,12 +232,12 @@
 
 (P determineBleuJoue1
    =goal>
-	state encodeBoule
+	state attendBoule
 	bqp red
       < nbB 3
 	waiting go
-;;   ?visual-location>
-;;       buffer  empty
+   ?visual-location>
+       buffer  failure
  ==>
    =goal>
 	state remember
@@ -224,13 +245,13 @@
 
 (P determineBleuJoue2
    =goal>
-	state encodeBoule
+	state attendBoule
 	bqp blue
       < nbB 3
         nbR 3
 	waiting go
-;;   ?visual-location>
-;;       buffer  empty
+   ?visual-location>
+       buffer  failure
  ==>
    =goal>
 	state remember
@@ -238,14 +259,14 @@
 
 (P determineRougeJoue1
    =goal>
-	state encodeBoule
+	state attendBoule
 	bqp blue
       < nbR 3
 	xn =xn
 	yn =yn
 	waiting go
-;;   ?visual-location>
-;;       buffer  empty
+   ?visual-location>
+       buffer  failure
  ==>
    !eval! (tir-hasard =xn =yn "red")
    =goal>
@@ -255,15 +276,15 @@
 
 (P determineRougeJoue2
    =goal>
-	state encodeBoule
+	state attendBoule
 	bqp red
       < nbR 3
 	nbB 3
 	xn =xn
 	yn =yn
 	waiting go
-;;   ?visual-location>
-;;       buffer  empty
+   ?visual-location>
+       buffer  failure
  ==>
    !output! (Rouge tir)
    !eval! (tir-hasard =xn =yn "red")
