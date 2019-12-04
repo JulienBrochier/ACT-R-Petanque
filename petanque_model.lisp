@@ -2,7 +2,8 @@
 
 (define-model petanque
 (sgp :seed (123456 0))
-(sgp :v t :esc t :lf 0.4 :bll 0.5 :ans 0.5 :rt 0 :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 8)
+(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.5 :rt 0 :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 8
+)
 
 (sgp :show-focus t)
 (chunk-type partie xn yn db1 db2 db3 dr1 dr2 dr3 dpp)
@@ -218,6 +219,20 @@
 	bqp =couleur
 )
 
+(P determinerBoulePlusProcheVrai2
+    =goal>
+	state detBPP
+	dist =dist
+	dpp =dpp
+        dist =dpp
+	couleur =couleur
+ ==>
+   =goal>
+	state trouverBoule
+	dpp =dist
+	bqp =couleur
+)
+
 (P determinerBoulePlusProcheFaux
     =goal>
 	state detBPP
@@ -314,7 +329,25 @@
 ;; Il faudra définir une similitude pour avoir une chance que ça match
 )
 
-(P cantRemember
+
+
+(P cantRemember-tirer
+    =goal>
+       state retrieving
+	xn =xn
+	yn =yn
+      > nbR 0 
+     ?retrieval>
+       buffer  failure
+ ==>
+    !output! (Tir au hasard)
+    !eval! (tirer )
+   =goal>
+	waiting wait   
+	state trouverBoule
+)
+
+(P cantRemember-pointer
     =goal>
        state retrieving
 	xn =xn
@@ -324,11 +357,11 @@
  ==>
     !output! (Tir au hasard)
     !eval!   (tir-hasard =xn =yn "blue")
-;;    !eval! (tirer)
-   =goal>
+    =goal>
 	waiting wait   
 	state trouverBoule
 )
+
 
 (P wait
    =goal>
@@ -358,7 +391,6 @@
 ;;	waiting wait   
 ;;	state trouverBoule
 )
-
 
 
 (goal-focus first-goal)

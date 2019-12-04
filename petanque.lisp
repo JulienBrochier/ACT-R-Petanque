@@ -68,8 +68,10 @@
 )
 
 (defun tirer ()
-  ;;(remove-items-from-exp-window *last_red_shoot*)
-  (add-text-to-exp-window *window* "O" :x 100 :y 100 :color "blue")
+(princ *boules_rouges*	)
+(push(pop *boules_rouges*)*boules_bleus*	)
+(princ *boules_bleus*	)
+(creation-terrain) 
 )
 
 (defun init-partie ()
