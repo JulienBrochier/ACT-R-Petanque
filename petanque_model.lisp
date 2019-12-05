@@ -6,19 +6,19 @@
 )
 
 (sgp :show-focus t)
-(chunk-type partie xn yn db1 db2 db3 dr1 dr2 dr3 dpp)
 (chunk-type tirer force inclinaison direction)
 (chunk-type terrain type)
-(chunk-type goal state typeTerrain ouvreur nbB nbR xn yn dist db1 db2 db3 dr1 dr2 dr3 dpp xpp ypp couleur bqp waiting)
+(chunk-type goal state typeTerrain ouvreur nbB nbR xn yn dist db1 db2 db3 dr1 dr2 dr3 dpp xpp ypp couleur bqp waiting dernier_coup dpp_boule_rouge)
+(chunk-type combinaison coup dpp)
 
 ;dpp : distance plus proche
 ;bqp : boule qui prend (couleur)
 
 (add-dm
- (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk)
+ (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk) (save-result isa chunk)
  (trouverBoule isa chunk) (attendBoule isa chunk)(encodeBoule isa chunk) (saveBoule isa chunk)
  (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)(done isa chunk)
- (go isa chunk)(plot isa chunk))
+ (go isa chunk)(plot isa chunk)(pointer isa chunk) (tirer isa chunk)(first isa chunk))
 
 (define-chunks
 (goal isa goal)
@@ -48,7 +48,7 @@
    +visual-location>
       :attended    nil
       color black
-   =goal>    
+   =goal>
       state       encodeCochonnet
       nbB 0
       nbR 0
@@ -74,6 +74,7 @@
 	dr1 0
 	dr2 0
 	dr3 0
+  dernier_coup first
    !output! (=coordX)
    !output! (=coordY)
 )
@@ -86,7 +87,7 @@
    +visual-location>
       :attended    nil
     - color black
-   =goal>    
+   =goal>
       state       attendBoule
       waiting go
 )
@@ -218,7 +219,7 @@
 	dpp =dist
 	bqp =couleur
 )
-
+;; Pour le remplacement:
 (P determinerBoulePlusProcheVrai2
     =goal>
 	state detBPP
@@ -249,6 +250,7 @@
    =goal>
 	state attendBoule
 	bqp red
+  dpp =dpp
       < nbB 3
 	waiting go
    ?visual-location>
@@ -256,6 +258,7 @@
  ==>
    =goal>
 	state remember
+  dpp_boule_rouge =dpp
 )
 
 (P determineBleuJoue2
@@ -272,21 +275,61 @@
 	state remember
 )
 
-(P determineRougeJoue1
+(P determineRougeCommence
    =goal>
+   dpp =dpp
 	state attendBoule
 	bqp blue
-      < nbR 3
+      = nbR 0
 	xn =xn
 	yn =yn
 	waiting go
    ?visual-location>
        buffer  failure
  ==>
+ ;; Le coup precedent est gagnant
    !eval! (tir-hasard =xn =yn "red")
    =goal>
-	state trouverBoule
+   state trouverBoule
+	 waiting wait
+)
+
+(P determineRougeJoue1
+   =goal>
+   dpp =dpp
+	state attendBoule
+	bqp blue
+      < nbR 3
+	xn =xn
+	yn =yn
+	waiting go
+  dernier_coup =dernier_coup
+  dpp_boule_rouge =dpp_boule_rouge
+   ?visual-location>
+       buffer  failure
+  ?imaginal>
+      state free
+ ==>
+ ;; Le coup precedent est gagnant
+   !eval! (tir-hasard =xn =yn "red")
+   =goal>
+	state save-result
 	waiting wait
+  +imaginal>
+  isa combinaison
+  dpp =dpp_boule_rouge
+  coup =dernier_coup
+)
+
+(P save-result
+ =imaginal>
+ =goal>
+  state save-result
+==>
+=goal>
+  state trouverBoule
+  waiting wait
+-imaginal>
 )
 
 (P determineRougeJoue2
@@ -318,34 +361,33 @@
 	xn =xn
 	yn =yn
 	dpp =dpp
+  dernier_coup =coup
  ==>
    =goal>
        state retrieving
    +retrieval>
-	isa partie
-	xn =xn
-	yn =yn
+	isa combinaison
 	dpp =dpp
-;; Il faudra définir une similitude pour avoir une chance que ça match
+  coup =coup
+;; Il faudra dï¿½finir une similitude pour avoir une chance que ï¿½a match
 )
-
-
 
 (P cantRemember-tirer
     =goal>
        state retrieving
 	xn =xn
 	yn =yn
-      > nbR 0 
+      > nbR 0
      ?retrieval>
        buffer  failure
  ==>
-    !output! (Tir au hasard)
+    !output! (Tirer au hasard)
    !eval! (set-tirer )
    !eval! (tirer )
    =goal>
-	waiting wait   
+	waiting wait
 	state trouverBoule
+  dernier_coup tirer
 )
 
 (P cantRemember-pointer
@@ -356,42 +398,65 @@
      ?retrieval>
        buffer  failure
  ==>
-    !output! (Tir au hasard)
+    !output! (pointer au hasard)
     !eval!   (tir-hasard =xn =yn "blue")
     !eval!   (set-pointer)
     =goal>
-	waiting wait   
+	waiting wait
 	state trouverBoule
+  dernier_coup pointer
 )
 
+(P canRemembertirer
+    =goal>
+       state retrieving
+       xn =xn
+       yn =yn
+   =retrieval>
+	     isa combinaison
+	     dpp =dpp
+       coup tirer
+ ==>
+   !output! (Remember)
+   !output! (Tir au hasard)
+   !eval! (set-tirer)
+   !eval! (tirer )
+   =goal>
+   waiting wait
+   state trouverBoule
+   dernier_coup tirer
+ )
+
+(P canRememberpointer
+    =goal>
+       state retrieving
+       xn =xn
+       yn =yn
+   =retrieval>
+	  isa combinaison
+	   dpp =dpp
+     coup pointer
+ ==>
+   !output! (Remember)
+   !output! (Tir au hasard)
+   !eval!   (tir-hasard =xn =yn "blue")
+   !eval!   (set-pointer);;executer le tir prï¿½vu
+   =goal>
+   waiting wait
+   state trouverBoule
+   dernier_coup pointer
+)
 
 (P wait
    =goal>
         waiting wait
 	state encodeBoule
    ?visual-location>
-       buffer  failure	
+       buffer  failure
  ==>
    !output! (WaiT)
    =goal>
 	state trouverBoule
-)
-
-(P canRemember
-    =goal>
-       state retrieving
-   =retrieval>
-	isa partie
-	xn =xn
-	yn =yn
-	dpp =dpp
- ==>
-   -goal>
-   !output! (Remember)
-;;executer le tir prévu
-;;   =goal>
-;;	waiting wait   
-;;	state trouverBoule
 )
 
 (P gagner
@@ -422,8 +487,6 @@
 )
 
 (goal-focus goal)
-
-
 
 (spp perdre :reward -5)
 (spp gagner :reward 10)
