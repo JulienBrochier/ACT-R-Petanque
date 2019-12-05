@@ -2,7 +2,7 @@
 
 (define-model petanque
 (sgp :seed (123456 0))
-(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.5 :rt 0 :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 8
+(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.5 :rt 0 :ul t :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 7
 )
 
 (sgp :show-focus t)
@@ -17,11 +17,11 @@
 (add-dm
  (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk)
  (trouverBoule isa chunk) (attendBoule isa chunk)(encodeBoule isa chunk) (saveBoule isa chunk)
- (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)
+ (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)(done isa chunk)
  (go isa chunk)(plot isa chunk))
 
 (define-chunks
-(first-goal isa goal)
+(goal isa goal)
 )
 
 
@@ -341,7 +341,8 @@
        buffer  failure
  ==>
     !output! (Tir au hasard)
-    !eval! (tirer )
+   !eval! (set-tirer )
+   !eval! (tirer )
    =goal>
 	waiting wait   
 	state trouverBoule
@@ -357,6 +358,7 @@
  ==>
     !output! (Tir au hasard)
     !eval!   (tir-hasard =xn =yn "blue")
+    !eval!   (set-pointer)
     =goal>
 	waiting wait   
 	state trouverBoule
@@ -392,6 +394,38 @@
 ;;	state trouverBoule
 )
 
+(P gagner
+   =goal>
+	state attendBoule
+	nbB 3
+        nbR 3
+        bqp blue
+   ?visual-location>
+       buffer  failure
+ ==>
+   !eval! (win)
+  =goal>
+   state done
+)
+(P perdre
+   =goal>
+	state attendBoule
+	nbB 3
+        nbR 3
+        bqp red
+   ?visual-location>
+       buffer  failure
+ ==>
+   !eval! (loose)
+  =goal>
+   state done
+)
 
-(goal-focus first-goal)
+(goal-focus goal)
+
+
+
+(spp perdre :reward -5)
+(spp gagner :reward 10)
+
 )
