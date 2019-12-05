@@ -2,7 +2,7 @@
 
 (define-model petanque
 (sgp :seed (123456 0))
-(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.5 :rt 0 :ul t :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 7
+(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.2 :rt 0 :ul t :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 7
 )
 
 (sgp :show-focus t)
@@ -311,13 +311,16 @@
       state free
  ==>
  ;; Le coup precedent est gagnant
+   !bind! =distance_round (round (/ =dpp_boule_rouge 30))
    !eval! (tir-hasard =xn =yn "red")
+   !output! (=distance_round)
    =goal>
 	state save-result
 	waiting wait
   +imaginal>
   isa combinaison
-  dpp =dpp_boule_rouge
+  ;; dpp =dpp_boule_rouge
+  dpp =distance_round
   coup =dernier_coup
 )
 
@@ -363,11 +366,12 @@
 	dpp =dpp
   dernier_coup =coup
  ==>
+ !bind! =distance_round (round (/ =dpp 30))
    =goal>
        state retrieving
    +retrieval>
 	isa combinaison
-	dpp =dpp
+	dpp =distance_round
   coup =coup
 ;; Il faudra d�finir une similitude pour avoir une chance que �a match
 )
@@ -469,6 +473,7 @@
        buffer  failure
  ==>
    !eval! (win)
+   !output! (Le modele gagne)
   =goal>
    state done
 )
@@ -482,6 +487,7 @@
        buffer  failure
  ==>
    !eval! (loose)
+   !output! (Le modele perd)
   =goal>
    state done
 )
