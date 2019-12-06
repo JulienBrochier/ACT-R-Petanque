@@ -106,7 +106,7 @@ resTot
 (defun tirer ()
   (let ((rdn (random 4)))
   (if (< rdn 3)
-     (progn (princ *boules_rouges*	)
+     (progn
      (push(pop *boules_rouges*)*boules_bleus*	)
      (creation-terrain)
   ))

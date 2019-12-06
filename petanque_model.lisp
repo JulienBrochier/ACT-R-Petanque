@@ -2,7 +2,8 @@
 
 (define-model petanque
 (sgp :seed (123456 0))
-(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.2 :rt 0 :ul t :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 7
+(sgp :v t :esc t :lf 0.4 :bll 0.5 :egs 3 :ans 0.2 :blc 0.5 :ol nil :rt 0 :ul t :ncnar nil :trace-detail high :visual-finst-span 5 :visual-num-finsts 7 :ut nil
+:alpha 0.2 :md 0
 )
 
 (sgp :show-focus t)
@@ -11,8 +12,6 @@
 (chunk-type goal state typeTerrain ouvreur nbB nbR xn yn dist db1 db2 db3 dr1 dr2 dr3 dpp xpp ypp couleur bqp waiting dernier_coup dpp_boule_rouge)
 (chunk-type combinaison coup dpp)
 
-;dpp : distance plus proche
-;bqp : boule qui prend (couleur)
 
 (add-dm
  (start isa chunk) (trouverCochonnet isa chunk) (encodeCochonnet isa chunk) (save-result isa chunk)
@@ -20,19 +19,14 @@
  (retrieving isa chunk) (detBPP isa chunk) (remember isa chunk) (wait isa chunk)(done isa chunk)
  (go isa chunk)(plot isa chunk)(pointer isa chunk) (tirer isa chunk)(first isa chunk))
 
-(define-chunks
-(goal isa goal)
-)
-
+(define-chunks (goal isa goal))
 
 (P debuterManche
    =goal>
       ISA         goal
       state       start
       ouvreur =ouvreur
-;;      typeTerrain =type
  ==>
-   !output! ("START")
    =goal>
       ISA         goal
       state   trouverCochonnet
@@ -44,7 +38,6 @@
       ISA         goal
       state       trouverCochonnet
  ==>
-   !output! ("find Cochonnet")
    +visual-location>
       :attended    nil
       color black
@@ -62,7 +55,6 @@
      screen-x     =coordX
      screen-y  	  =coordY
  ==>
-   !output! ("Encode le cochonnet")
    =goal>
       state       trouverBoule
 	xn =coordX
@@ -75,8 +67,6 @@
 	dr2 0
 	dr3 0
   dernier_coup first
-   !output! (=coordX)
-   !output! (=coordY)
 )
 
 (P findBoule
@@ -118,14 +108,11 @@
      screen-y  	  =coordY
      color        =couleur
  ==>
-   !output! ("Encode boule")
    !bind! =dist (sqrt (+ (* (- =coordX =xn) (- =coordX =xn)) (* (- =coordY =yn) (- =coordY =yn))) )
    =goal>
       state   saveBoule
 	dist  =dist
 	couleur =couleur
-  !output! (=dist)
-  !output! (=couleur)
 )
 
 (P saveBouleBleu1
@@ -219,7 +206,7 @@
 	dpp =dist
 	bqp =couleur
 )
-;; Pour le remplacement:
+
 (P determinerBoulePlusProcheVrai2
     =goal>
 	state detBPP
@@ -287,7 +274,6 @@
    ?visual-location>
        buffer  failure
  ==>
- ;; Le coup precedent est gagnant
    !eval! (tir-hasard =xn =yn "red")
    =goal>
    state trouverBoule
@@ -310,16 +296,13 @@
   ?imaginal>
       state free
  ==>
- ;; Le coup precedent est gagnant
    !bind! =distance_round (round (/ =dpp_boule_rouge 30))
    !eval! (tir-hasard =xn =yn "red")
-   !output! (=distance_round)
    =goal>
 	state save-result
 	waiting wait
   +imaginal>
   isa combinaison
-  ;; dpp =dpp_boule_rouge
   dpp =distance_round
   coup =dernier_coup
 )
@@ -347,16 +330,11 @@
    ?visual-location>
        buffer  failure
  ==>
-   !output! (Rouge tir)
    !eval! (tir-hasard =xn =yn "red")
    =goal>
 	state trouverBoule
 	waiting wait
 )
-
-;;
-;;determiner bleu et rouge out
-;;
 
 (P searchInMemory
    =goal>
@@ -373,7 +351,6 @@
 	isa combinaison
 	dpp =distance_round
   coup =coup
-;; Il faudra d�finir une similitude pour avoir une chance que �a match
 )
 
 (P cantRemember-tirer
@@ -385,7 +362,6 @@
      ?retrieval>
        buffer  failure
  ==>
-    !output! (Tirer au hasard)
    !eval! (set-tirer )
    !eval! (tirer )
    =goal>
@@ -402,7 +378,6 @@
      ?retrieval>
        buffer  failure
  ==>
-    !output! (pointer au hasard)
     !eval!   (tir-hasard =xn =yn "blue")
     !eval!   (set-pointer)
     =goal>
@@ -421,8 +396,6 @@
 	     dpp =dpp
        coup tirer
  ==>
-   !output! (Remember)
-   !output! (Tir au hasard)
    !eval! (set-tirer)
    !eval! (tirer )
    =goal>
@@ -441,8 +414,6 @@
 	   dpp =dpp
      coup pointer
  ==>
-   !output! (Remember)
-   !output! (Tir au hasard)
    !eval!   (tir-hasard =xn =yn "blue")
    !eval!   (set-pointer);;executer le tir pr�vu
    =goal>
@@ -458,7 +429,6 @@
    ?visual-location>
        buffer  failure
  ==>
-   !output! (WaiT)
    =goal>
 	state trouverBoule
 )
@@ -473,7 +443,7 @@
        buffer  failure
  ==>
    !eval! (win)
-   !output! (Le modele gagne)
+   !output! (Le modèle a gagné.)
   =goal>
    state done
 )
@@ -487,7 +457,7 @@
        buffer  failure
  ==>
    !eval! (loose)
-   !output! (Le modele perd)
+   !output! (Le modèle a perdu.)
   =goal>
    state done
 )
