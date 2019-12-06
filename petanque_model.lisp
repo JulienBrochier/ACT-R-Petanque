@@ -494,7 +494,7 @@
 
 (goal-focus goal)
 
-(spp perdre :reward -5)
+(spp perdre :reward -10)
 (spp gagner :reward 10)
 
 )

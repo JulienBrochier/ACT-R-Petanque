@@ -104,13 +104,13 @@ resTot
 )
 
 (defun tirer ()
-  (let ((rdn (random 2)))
-  (if (= rdn 0)
+  (let ((rdn (random 4)))
+  (if (< rdn 3)
      (progn (princ *boules_rouges*	)
      (push(pop *boules_rouges*)*boules_bleus*	)
      (creation-terrain)
   ))
-(if (= rdn 1)
+(if (= rdn 3)
  (tir-hasard 50 50 "blue")
 )))
 
